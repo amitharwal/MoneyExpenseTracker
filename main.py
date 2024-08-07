@@ -42,55 +42,54 @@ class ExpenseTracker:
     def tabs(self):
         my_tab = ttk.Notebook(self.root)
         my_tab.pack(fill='both', expand=1)
-        screen1 = ttk.Frame(my_tab, width=800, height=600)
-        screen2 = ttk.Frame(my_tab, width=800, height=600)
-        screen3 = ttk.Frame(my_tab, width=800, height=600)  # New tab for viewing expenses
 
-        screen1.pack(fill="both", expand=1)
-        screen2.pack(fill="both", expand=1)
-        screen3.pack(fill="both", expand=1)
+        # Create frames for each tab
+        add_expense_frame = ttk.Frame(my_tab, width=800, height=600)
+        view_summary_frame = ttk.Frame(my_tab, width=800, height=600)
+        view_expenses_frame = ttk.Frame(my_tab, width=800, height=600)
 
-        my_tab.add(screen1, text="Add Expense")
-        my_tab.add(screen2, text="View Summary")
-        my_tab.add(screen3, text="View All Expenses")  # Add the new tab
+        add_expense_frame.pack(fill="both", expand=1)
+        view_summary_frame.pack(fill="both", expand=1)
+        view_expenses_frame.pack(fill="both", expand=1)
 
-        # ADD EXPENSE TAB (screen1)
+        # Add frames to notebook as tabs
+        my_tab.add(add_expense_frame, text="Add Expense")
+        my_tab.add(view_summary_frame, text="View Summary")
+        my_tab.add(view_expenses_frame, text="View All Expenses")
 
-        # Date Entry
-        dateEntryLabel = ttk.Label(screen1, text="Date Of Expense (YYYY-MM-DD):")
-        dateEntryLabel.grid(row=0, column=0, padx=10, pady=10, sticky='e')
-        self.dateEntry = ttk.Entry(screen1, width=30)
+        # Configure Add Expense Tab
+        self.configure_add_expense_tab(add_expense_frame)
+
+        # Configure View Summary Tab
+        self.create_summary_view(view_summary_frame)
+
+        # Configure View All Expenses Tab
+        self.configure_view_expenses_tab(view_expenses_frame)
+
+    def configure_add_expense_tab(self, frame):
+        # Configure Add Expense Tab
+        ttk.Label(frame, text="Date Of Expense (YYYY-MM-DD):").grid(row=0, column=0, padx=10, pady=10, sticky='e')
+        self.dateEntry = ttk.Entry(frame, width=30)
         self.dateEntry.grid(row=0, column=1, padx=10, pady=10, sticky='w')
 
-        # Amount Entry
-        amountEntryLabel = ttk.Label(screen1, text="Amount Spent:")
-        amountEntryLabel.grid(row=1, column=0, padx=10, pady=10, sticky='e')
-        self.amountEntry = ttk.Entry(screen1, width=30)
+        ttk.Label(frame, text="Amount Spent:").grid(row=1, column=0, padx=10, pady=10, sticky='e')
+        self.amountEntry = ttk.Entry(frame, width=30)
         self.amountEntry.grid(row=1, column=1, padx=10, pady=10, sticky='w')
 
-        # Description Entry
-        descriptionEntryLabel = ttk.Label(screen1, text="Description:")
-        descriptionEntryLabel.grid(row=2, column=0, padx=10, pady=10, sticky='e')
-        self.descriptionEntry = ttk.Entry(screen1, width=30)
+        ttk.Label(frame, text="Description:").grid(row=2, column=0, padx=10, pady=10, sticky='e')
+        self.descriptionEntry = ttk.Entry(frame, width=30)
         self.descriptionEntry.grid(row=2, column=1, padx=10, pady=10, sticky='w')
 
-        # Categories dropdown
-        categoryLabel = ttk.Label(screen1, text="Category:")
-        categoryLabel.grid(row=3, column=0, padx=10, pady=10, sticky='e')
+        ttk.Label(frame, text="Category:").grid(row=3, column=0, padx=10, pady=10, sticky='e')
         categories = ["Bills", "Shopping", "Groceries", "Food", "Transportation", "Entertainment"]
-        self.categorydropdown = ttk.Combobox(screen1, values=categories, width=28)
+        self.categorydropdown = ttk.Combobox(frame, values=categories, width=28)
         self.categorydropdown.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
-        # Submission button
-        button = ttk.Button(screen1, text='Submit', command=self.submit_expense)
-        button.grid(row=4, column=1, pady=20, sticky='w')
+        ttk.Button(frame, text='Submit', command=self.submit_expense).grid(row=4, column=1, pady=20, sticky='w')
 
-        # VIEW SUMMARY TAB (screen2)
-        self.create_summary_view(screen2)
-
-        # VIEW ALL EXPENSES TAB (screen3)
-
-        self.expenses_tree = ttk.Treeview(screen3, columns=("ID", "Date", "Category", "Amount", "Description"),
+    def configure_view_expenses_tab(self, frame):
+        # Configure View All Expenses Tab
+        self.expenses_tree = ttk.Treeview(frame, columns=("ID", "Date", "Category", "Amount", "Description"),
                                           show='headings')
         self.expenses_tree.heading("ID", text="ID")
         self.expenses_tree.heading("Date", text="Date")
@@ -105,12 +104,12 @@ class ExpenseTracker:
         self.expenses_tree.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 
         # Add a scrollbar
-        scrollbar = ttk.Scrollbar(screen3, orient='vertical', command=self.expenses_tree.yview)
+        scrollbar = ttk.Scrollbar(frame, orient='vertical', command=self.expenses_tree.yview)
         self.expenses_tree.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
-        screen3.grid_rowconfigure(0, weight=1)
-        screen3.grid_columnconfigure(0, weight=1)
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
 
         self.load_expenses()  # Load expenses into the treeview
 
