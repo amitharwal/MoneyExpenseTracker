@@ -12,16 +12,19 @@ class ExpenseTracker:
         self.root.title("Personal Expense Tracker")
         self.root.geometry("800x600")
 
-        # Apply a modern theme
+        # Apply a modern dark theme
         style = ttk.Style(self.root)
         style.theme_use('clam')
 
-        # Configure styles
-        style.configure('TLabel', font=('Arial', 12), padding=10)
-        style.configure('TButton', font=('Arial', 12), padding=5)
-        style.configure('TEntry', padding=5)
-        style.configure('Treeview.Heading', font=('Arial', 12, 'bold'))
-        style.configure('Treeview', font=('Arial', 10))
+        # Configure styles for dark theme
+        self.root.configure(bg='#2E2E2E')  # Dark background for the main window
+        style.configure('TLabel', font=('Arial', 12), padding=10, background='#2E2E2E', foreground='white')
+        style.configure('TButton', font=('Arial', 12), padding=5, background='#4A4A4A', foreground='white')
+        style.configure('TEntry', padding=5, fieldbackground='#4A4A4A', foreground='white')
+        style.configure('Treeview', background='#4A4A4A', foreground='white', rowheight=25, fieldbackground='#4A4A4A')
+        style.configure('Treeview.Heading', font=('Arial', 12, 'bold'), background='#3A3A3A', foreground='white')
+        style.map('TButton', background=[('active', '#5A5A5A')])
+        style.configure('TFrame', background='#2E2E2E')  # Add this line to apply background to ttk.Frame
 
         self.db_handler = DatabaseHandler()  # Initialize the database handler
         self.summary_handler = Summary(self.db_handler.connection)  # Initialize the summary handler
@@ -30,10 +33,10 @@ class ExpenseTracker:
         self.tabs()
 
     def menubar(self):
-        my_menu = Menu(self.root)
+        my_menu = Menu(self.root, background='#3A3A3A', foreground='white', tearoff=0)
         self.root.config(menu=my_menu)
 
-        file = Menu(my_menu, tearoff=0)
+        file = Menu(my_menu, tearoff=0, background='#3A3A3A', foreground='white')
         my_menu.add_cascade(label="File", menu=file)
         file.add_command(label="Export to JSON", command=self.export_to_json)
         file.add_command(label="Import from JSON", command=self.import_from_json)
@@ -43,7 +46,7 @@ class ExpenseTracker:
         my_tab = ttk.Notebook(self.root)
         my_tab.pack(fill='both', expand=1)
 
-        # Create frames for each tab
+        # Create frames for each tab with dark background
         add_expense_frame = ttk.Frame(my_tab, width=800, height=600)
         view_summary_frame = ttk.Frame(my_tab, width=800, height=600)
         view_expenses_frame = ttk.Frame(my_tab, width=800, height=600)
@@ -108,6 +111,9 @@ class ExpenseTracker:
         self.expenses_tree.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
+        # Add a delete button
+        ttk.Button(frame, text='Delete Selected Expense', command=self.delete_selected_expense).grid(row=1, column=0, pady=10)
+
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
@@ -131,21 +137,21 @@ class ExpenseTracker:
         summary_tab.add(category_summary_frame, text="Category Summary")
 
         # Daily Summary
-        self.daily_summary_text = tk.Text(daily_summary_frame, height=15, wrap='word')
+        self.daily_summary_text = tk.Text(daily_summary_frame, height=15, wrap='word', bg='#4A4A4A', fg='white')
         self.daily_summary_text.pack(fill='both', expand=1, padx=10, pady=10)
         daily_plot_button = ttk.Button(daily_summary_frame, text="Plot Daily Summary",
                                        command=self.plot_daily_summary)
         daily_plot_button.pack(pady=10)
 
         # Monthly Summary
-        self.monthly_summary_text = tk.Text(monthly_summary_frame, height=15, wrap='word')
+        self.monthly_summary_text = tk.Text(monthly_summary_frame, height=15, wrap='word', bg='#4A4A4A', fg='white')
         self.monthly_summary_text.pack(fill='both', expand=1, padx=10, pady=10)
         monthly_plot_button = ttk.Button(monthly_summary_frame, text="Plot Monthly Summary",
                                          command=self.plot_monthly_summary)
         monthly_plot_button.pack(pady=10)
 
         # Category Summary
-        self.category_summary_text = tk.Text(category_summary_frame, height=15, wrap='word')
+        self.category_summary_text = tk.Text(category_summary_frame, height=15, wrap='word', bg='#4A4A4A', fg='white')
         self.category_summary_text.pack(fill='both', expand=1, padx=10, pady=10)
         category_plot_button = ttk.Button(category_summary_frame, text="Plot Category Summary",
                                           command=self.plot_category_summary)
@@ -241,6 +247,25 @@ class ExpenseTracker:
         except ValueError as e:
             messagebox.showerror("Error", str(e))
 
+    def delete_selected_expense(self):
+        # Get the selected expense
+        selected_item = self.expenses_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Warning", "Please select an expense to delete.")
+            return
+
+        # Get the expense ID
+        expense_id = self.expenses_tree.item(selected_item)['values'][0]
+
+        # Delete from database
+        self.db_handler.delete_expense(expense_id)
+
+        # Update the UI
+        self.load_expenses()
+        self.load_summaries()
+
+        messagebox.showinfo("Success", "Expense deleted successfully.")
+
     def export_to_json(self):
         try:
             self.db_handler.export_to_json()
@@ -251,6 +276,8 @@ class ExpenseTracker:
     def import_from_json(self):
         try:
             self.db_handler.import_from_json()
+            self.load_expenses()
+            self.load_summaries()
             messagebox.showinfo("Success", "Data imported from expenses.json")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to import data: {str(e)}")
