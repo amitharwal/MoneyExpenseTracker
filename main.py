@@ -5,6 +5,7 @@ from summary import Summary
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import ttkbootstrap as tb
+from datetime import datetime
 
 
 class ExpenseTracker:
@@ -19,6 +20,8 @@ class ExpenseTracker:
 
         self.db_handler = DatabaseHandler()  # Initialize the database handler
         self.summary_handler = Summary(self.db_handler.connection)  # Initialize the summary handler
+
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         self.menubar()
         self.tabs()
@@ -71,7 +74,8 @@ class ExpenseTracker:
         self.categorydropdown = tb.Combobox(frame, values=categories, width=28, bootstyle="info")
         self.categorydropdown.grid(row=3, column=1, padx=10, pady=10, sticky='w')
 
-        tb.Button(frame, text='Submit', command=self.submit_expense, bootstyle="info-outline", style='Accent.TButton').grid(row=4, column=1, pady=20, sticky='w')
+        self.submit_button = tb.Button(frame, text='Submit', command=self.submit_expense, bootstyle="info-outline", style='Accent.TButton')
+        self.submit_button.grid(row=4, column=1, pady=20, sticky='w')
 
     def configure_view_expenses_tab(self, frame):
         self.expenses_tree = tb.Treeview(frame, columns=("ID", "Date", "Category", "Amount", "Description"), show='headings', style="info")
@@ -176,25 +180,46 @@ class ExpenseTracker:
             self.expenses_tree.insert('', 'end', values=expense)
 
     def submit_expense(self):
+        self.disable_submit_button()
+
         date = self.dateEntry.get()
         amount = self.amountEntry.get()
         description = self.descriptionEntry.get()
         category = self.categorydropdown.get()
 
         try:
-            if not date or not amount or not category:
-                raise ValueError("All fields except description must be filled out.")
+            # Date validation
+            datetime.strptime(date, '%Y-%m-%d')
+
+            # Amount validation
             amount = float(amount)
+            if amount <= 0:
+                raise ValueError("Amount must be greater than 0.")
+
+            if not category:
+                raise ValueError("Category must be selected.")
+
             self.db_handler.create_expense(date, category, amount, description)
-            self.dateEntry.delete(0, tk.END)
-            self.amountEntry.delete(0, tk.END)
-            self.descriptionEntry.delete(0, tk.END)
-            self.categorydropdown.set('')
+            self.clear_form()
             self.load_expenses()
             self.load_summaries()
             messagebox.showinfo("Success", "Expense submitted successfully.")
         except ValueError as e:
             messagebox.showerror("Error", str(e))
+
+        self.enable_submit_button()
+
+    def clear_form(self):
+        self.dateEntry.delete(0, tk.END)
+        self.amountEntry.delete(0, tk.END)
+        self.descriptionEntry.delete(0, tk.END)
+        self.categorydropdown.set('')
+
+    def disable_submit_button(self):
+        self.submit_button.config(state='disabled')
+
+    def enable_submit_button(self):
+        self.submit_button.config(state='normal')
 
     def delete_selected_expense(self):
         selected_item = self.expenses_tree.selection()
@@ -222,6 +247,10 @@ class ExpenseTracker:
             messagebox.showinfo("Success", "Data imported from expenses.json")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to import data: {str(e)}")
+
+    def on_closing(self):
+        self.db_handler.close_connection()
+        self.root.destroy()
 
 
 if __name__ == "__main__":
