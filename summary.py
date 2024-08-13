@@ -9,23 +9,20 @@ class Summary:
 
     def get_daily_summary(self):
         cursor = self.db_connection.cursor()
-        # Query to group expenses by date and sum the amounts
         cursor.execute('''
-            SELECT date, SUM(amount) FROM expenses GROUP BY date
+            SELECT date, SUM(amount) FROM expenses GROUP BY date ORDER BY date DESC
         ''')
         return cursor.fetchall()
 
     def get_monthly_summary(self):
         cursor = self.db_connection.cursor()
-        # Query to extract the month and year, group by them, and sum the amounts
         cursor.execute('''
-            SELECT strftime('%Y-%m', date) as month, SUM(amount) FROM expenses GROUP BY month
+            SELECT strftime('%Y-%m', date) as month, SUM(amount) FROM expenses GROUP BY month ORDER BY month DESC
         ''')
         return cursor.fetchall()
 
     def get_category_summary(self):
         cursor = self.db_connection.cursor()
-        # Query to group expenses by category and sum the amounts
         cursor.execute('''
             SELECT category, SUM(amount) FROM expenses GROUP BY category
         ''')
