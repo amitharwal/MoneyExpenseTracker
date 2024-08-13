@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import os
 
 
 class DatabaseHandler:
@@ -58,32 +59,42 @@ class DatabaseHandler:
         self.connection.commit()
 
     def export_to_json(self, json_file='expenses.json'):
-        expenses = self.read_expenses()
-        expenses_list = [
-            {'id': exp[0], 'date': exp[1], 'category': exp[2], 'amount': exp[3], 'description': exp[4]}
-            for exp in expenses
-        ]
-        with open(json_file, 'w') as file:
-            json.dump(expenses_list, file, indent=4)
-        print(f"Data exported to {json_file}")
+        try:
+            expenses = self.read_expenses()
+            expenses_list = [
+                {'id': exp[0], 'date': exp[1], 'category': exp[2], 'amount': exp[3], 'description': exp[4]}
+                for exp in expenses
+            ]
+            with open(json_file, 'w') as file:
+                json.dump(expenses_list, file, indent=4)
+            print(f"Data exported to {json_file}")
+        except (IOError, OSError) as e:
+            print(f"Failed to export data: {e}")
 
     def import_from_json(self, json_file='expenses.json'):
-        with open(json_file, 'r') as file:
-            expenses_list = json.load(file)
+        if not os.path.exists(json_file):
+            print(f"File {json_file} does not exist.")
+            return
 
-        cursor = self.connection.cursor()
-        for expense in expenses_list:
-            cursor.execute('''
-                INSERT INTO expenses (id, date, category, amount, description)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    date=excluded.date,
-                    category=excluded.category,
-                    amount=excluded.amount,
-                    description=excluded.description
-            ''', (expense['id'], expense['date'], expense['category'], expense['amount'], expense['description']))
-        self.connection.commit()
-        print(f"Data imported from {json_file}")
+        try:
+            with open(json_file, 'r') as file:
+                expenses_list = json.load(file)
+
+            cursor = self.connection.cursor()
+            for expense in expenses_list:
+                cursor.execute('''
+                    INSERT INTO expenses (id, date, category, amount, description)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        date=excluded.date,
+                        category=excluded.category,
+                        amount=excluded.amount,
+                        description=excluded.description
+                ''', (expense['id'], expense['date'], expense['category'], expense['amount'], expense['description']))
+            self.connection.commit()
+            print(f"Data imported from {json_file}")
+        except (IOError, OSError, json.JSONDecodeError) as e:
+            print(f"Failed to import data: {e}")
 
     def close_connection(self):
         self.connection.close()
