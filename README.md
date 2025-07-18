@@ -1,2 +1,2 @@
 # MoneyExpenseTracker
-A money expense tracker to understand spending habits and hold summaries of said habits. Program Description: An app using Python with a tkinter with SQLite3 and JSON to create a proper GUI and backend to handle users' personal expense inputs. It will allow users to keep track of their expenses and better their habits. Users can view summaries of their expenses per day, month, etc. via Matplotlib summary charts.
+A money expense tracker using Python, Flask, and a JSON backend to keep track of spending. Deployed using Render.
