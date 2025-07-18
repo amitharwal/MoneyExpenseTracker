@@ -1,0 +1,421 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* CSS Variables for easy color management */
+:root {
+    --primary-bg: #0a192f;        /* Dark blue background */
+    --secondary-bg: #172a45;       /* Slightly lighter blue */
+    --card-bg: #1e3a5f;           /* Card background */
+    --accent: #64ffda;            /* Mint green accent */
+    --text-primary: #ccd6f6;      /* Light blue-white text */
+    --text-secondary: #8892b0;    /* Muted blue-gray text */
+    --danger: #ff5370;            /* Red for delete */
+    --success: #64ffda;           /* Success green */
+    --border: #233554;            /* Border color */
+}
+
+/* Body with animated gradient background */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(-45deg, #0a192f, #172a45, #1e3a5f, #0a192f);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text-primary);
+}
+
+/* Gradient animation */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Main container */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+/* Header styles */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.header-title {
+    font-size: 3em;
+    background: linear-gradient(45deg, var(--accent), var(--text-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+/* Icon bounce animation */
+.icon-bounce {
+    display: inline-block;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+/* Glow effect */
+@keyframes glow {
+    from { filter: drop-shadow(0 0 5px var(--accent)); }
+    to { filter: drop-shadow(0 0 20px var(--accent)); }
+}
+
+/* Server status */
+.server-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(100, 255, 218, 0.1);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Card styles */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* Form styles */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Button styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--primary-bg);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(100, 255, 218, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Button ripple effect */
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Loading spinner */
+.loading {
+    text-align: center;
+    padding: 40px;
+    display: none;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Success message */
+.success-message {
+    background: var(--success);
+    color: var(--primary-bg);
+    padding: 15px 30px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+    animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Expense item */
+.expense-item {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    animation: fadeInLeft 0.5s ease-out;
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.expense-item:hover {
+    transform: translateX(10px);
+    border-color: var(--accent);
+    box-shadow: 0 5px 15px rgba(100, 255, 218, 0.1);
+}
+
+/* Expense details */
+.expense-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.expense-description {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.expense-category {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(100, 255, 218, 0.1);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--accent);
+}
+
+.expense-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 20px;
+}
+
+/* Delete button */
+.delete-btn {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+    background: #ff3048;
+    transform: scale(1.05);
+}
+
+/* Total section */
+.total-section {
+    background: linear-gradient(135deg, var(--card-bg), var(--secondary-bg));
+    text-align: center;
+}
+
+.total-amount {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 20px 0;
+    animation: countUp 1s ease-out;
+}
+
+@keyframes countUp {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Export buttons */
+.export-section {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-export {
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+}
+
+.btn-export:hover {
+    background: var(--accent);
+    color: var(--primary-bg);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px;
+    color: var(--text-secondary);
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .expense-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .export-section {
+        flex-direction: column;
+    }
+
+    .header-title {
+        font-size: 2em;
+    }
+}

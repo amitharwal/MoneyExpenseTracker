@@ -2,7 +2,7 @@ import webbrowser
 import os
 
 # Open the HTML file in the default browser
-file_path = os.path.abspath('expense_tracker.html')
+file_path = os.path.abspath('templates/index.html')
 webbrowser.open(f'file://{file_path}')
 
 print("✅ Expense Tracker opened in your browser!")
