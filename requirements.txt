@@ -11,9 +11,5 @@ Flask-SQLAlchemy==3.1.1 # Connects Flask with SQLAlchemy
 Flask-Login==0.6.3      # Handles user sessions
 Werkzeug==3.0.1        # For password hashing
 
-# Data Analysis (for later)
-pandas==2.1.4          # Data manipulation
-numpy==1.26.2          # Numerical operations
-
 # Environment
 python-dotenv==1.0.0   # For environment variables
