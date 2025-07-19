@@ -3,13 +3,13 @@ Flask==3.0.0
 gunicorn==21.2.0
 
 # Database
-psycopg2-binary==2.9.9  # PostgreSQL adapter for Python
-SQLAlchemy==2.0.23      # Makes database operations easier
+psycopg2-binary==2.9.9 # PostgreSQL adapter for Python
+SQLAlchemy==2.0.25
 Flask-SQLAlchemy==3.1.1 # Connects Flask with SQLAlchemy
 
 # Authentication
-Flask-Login==0.6.3      # Handles user sessions
-Werkzeug==3.0.1        # For password hashing
+Flask-Login==0.6.3
+Werkzeug==3.0.1 # For password hashing
 
 # Environment
-python-dotenv==1.0.0   # For environment variables
+python-dotenv==1.0.0 # For environment variables
