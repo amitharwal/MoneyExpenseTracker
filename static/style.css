@@ -1,5 +1,3 @@
-/* static/style.css - Beautiful dark blue theme with animations */
-
 /* Reset and base styles */
 * {
     margin: 0;
@@ -474,12 +472,30 @@ body {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 20px;
+    /* IMPORTANT: Fixed height for charts */
+    height: 400px;
+    position: relative;
 }
 
 .chart-card h4 {
     color: var(--text-primary);
     margin-bottom: 15px;
     text-align: center;
+}
+
+/* CRITICAL: Chart canvas sizing */
+.chart-card canvas {
+    max-width: 100% !important;
+    max-height: 320px !important; /* Leave room for title */
+    width: 100% !important;
+    height: 320px !important;
+}
+
+/* Chart container wrapper */
+.chart-wrapper {
+    position: relative;
+    height: 320px;
+    width: 100%;
 }
 
 .insights-card {
@@ -528,5 +544,15 @@ body {
 
     .charts-container {
         grid-template-columns: 1fr;
+    }
+
+    /* Smaller charts on mobile */
+    .chart-card {
+        height: 350px;
+    }
+
+    .chart-card canvas {
+        max-height: 270px !important;
+        height: 270px !important;
     }
 }

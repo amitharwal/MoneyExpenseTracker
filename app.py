@@ -27,7 +27,6 @@ login_manager.login_view = 'login'  # Where to redirect if not logged in
 # This tells Flask-Login how to find a user
 @login_manager.user_loader
 def load_user(user_id):
-    """Load user by ID for Flask-Login"""
     return User.query.get(int(user_id))
 
 

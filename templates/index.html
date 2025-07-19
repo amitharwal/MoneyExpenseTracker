@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Add Chart.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -98,7 +97,6 @@
                 </div>
             </section>
 
-            <!-- NEW ANALYTICS SECTION -->
             <section class="analytics-section card">
                 <h3 class="section-title">📊 Analytics Dashboard</h3>
 
@@ -118,12 +116,16 @@
                     <div class="charts-container">
                         <div class="chart-card">
                             <h4>Monthly Spending Trend</h4>
-                            <canvas id="monthly-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="monthly-chart"></canvas>
+                            </div>
                         </div>
 
                         <div class="chart-card">
                             <h4>Spending by Category</h4>
-                            <canvas id="category-chart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="category-chart"></canvas>
+                            </div>
                         </div>
                     </div>
 

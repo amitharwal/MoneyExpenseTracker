@@ -256,86 +256,157 @@ function exportToJSON() {
     showSuccess('💾 Exported to JSON!');
 }
 
-// NEW ANALYTICS FUNCTIONS
+// ANALYTICS FUNCTIONS
 
 // Load analytics data
 async function loadAnalytics() {
+    console.log('🔍 Starting loadAnalytics function');
+
     try {
+        console.log('📡 Fetching analytics data...');
         const response = await fetch('/api/analytics/summary');
         const data = await response.json();
+
+        console.log('📊 Analytics data received:', data);
+
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('❌ Chart.js is not loaded!');
+            showChartError('monthly-chart-error');
+            showChartError('category-chart-error');
+            return;
+        } else {
+            console.log('✅ Chart.js is loaded');
+        }
 
         // Update summary stats
         document.getElementById('total-spending').textContent = `$${data.total_expenses.toFixed(2)}`;
         document.getElementById('expense-count').textContent = expenses.length;
 
-        // Create charts
-        createMonthlyChart(data.monthly_data);
-        createCategoryChart(data.category_data);
+        // Create charts if data exists
+        if (data.monthly_data && data.monthly_data.length > 0) {
+            console.log('📈 Creating monthly chart with data:', data.monthly_data);
+            createMonthlyChart(data.monthly_data);
+        } else {
+            console.log('📈 No monthly data available');
+            showChartPlaceholder('monthly-chart', 'No monthly data yet. Add expenses from different months!');
+        }
+
+        if (data.category_data && data.category_data.length > 0) {
+            console.log('🥧 Creating category chart with data:', data.category_data);
+            createCategoryChart(data.category_data);
+        } else {
+            console.log('🥧 No category data available');
+            showChartPlaceholder('category-chart', 'No category data yet. Add some expenses!');
+        }
 
         // Display insights
+        console.log('💡 Displaying insights:', data.insights);
         displayInsights(data.insights);
 
     } catch (error) {
-        console.error('Error loading analytics:', error);
+        console.error('❌ Error loading analytics:', error);
     }
+}
+
+// Show chart error
+function showChartError(errorElementId) {
+    const errorEl = document.getElementById(errorElementId);
+    if (errorEl) {
+        errorEl.style.display = 'block';
+    }
+}
+
+// Show chart placeholder
+function showChartPlaceholder(canvasId, message) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw placeholder text
+    ctx.fillStyle = '#8892b0';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
 }
 
 // Create monthly spending trend chart
 function createMonthlyChart(monthlyData) {
-    const ctx = document.getElementById('monthly-chart').getContext('2d');
+    const canvas = document.getElementById('monthly-chart');
+    if (!canvas) {
+        console.error('Monthly chart canvas not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
 
     // Destroy existing chart if it exists
     if (window.monthlyChart) {
         window.monthlyChart.destroy();
     }
 
-    window.monthlyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: monthlyData.map(item => {
-                // Convert "2025-07" to "July 2025"
-                const date = new Date(item.month + '-01');
-                return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            }),
-            datasets: [{
-                label: 'Monthly Spending',
-                data: monthlyData.map(item => item.amount),
-                borderColor: '#64ffda',
-                backgroundColor: 'rgba(100, 255, 218, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4 // Smooth curves
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    labels: { color: '#ccd6f6' }
-                }
+    try {
+        window.monthlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: monthlyData.map(item => {
+                    // Convert "2025-07" to "July 2025"
+                    const date = new Date(item.month + '-01');
+                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Monthly Spending',
+                    data: monthlyData.map(item => item.amount),
+                    borderColor: '#64ffda',
+                    backgroundColor: 'rgba(100, 255, 218, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
             },
-            scales: {
-                x: {
-                    ticks: { color: '#8892b0' },
-                    grid: { color: '#233554' }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#ccd6f6' }
+                    }
                 },
-                y: {
-                    ticks: {
-                        color: '#8892b0',
-                        callback: function(value) {
-                            return '$' + value.toFixed(2);
-                        }
+                scales: {
+                    x: {
+                        ticks: { color: '#8892b0' },
+                        grid: { color: '#233554' }
                     },
-                    grid: { color: '#233554' }
+                    y: {
+                        ticks: {
+                            color: '#8892b0',
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        },
+                        grid: { color: '#233554' }
+                    }
                 }
             }
-        }
-    });
+        });
+        console.log('✅ Monthly chart created successfully');
+    } catch (error) {
+        console.error('❌ Error creating monthly chart:', error);
+        showChartPlaceholder('monthly-chart', 'Error loading chart');
+    }
 }
 
 // Create category pie chart
 function createCategoryChart(categoryData) {
-    const ctx = document.getElementById('category-chart').getContext('2d');
+    const canvas = document.getElementById('category-chart');
+    if (!canvas) {
+        console.error('Category chart canvas not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
 
     // Destroy existing chart if it exists
     if (window.categoryChart) {
@@ -348,46 +419,53 @@ function createCategoryChart(categoryData) {
         '#82aaff', '#f78c6c', '#c792ea', '#89ddff'
     ];
 
-    window.categoryChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: categoryData.map(item => item.category),
-            datasets: [{
-                data: categoryData.map(item => item.amount),
-                backgroundColor: colors.slice(0, categoryData.length),
-                borderColor: '#1e3a5f',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#ccd6f6',
-                        padding: 15
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.raw / total) * 100).toFixed(1);
-                            return `${context.label}: $${context.raw.toFixed(2)} (${percentage}%)`;
+    try {
+        window.categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryData.map(item => item.category),
+                datasets: [{
+                    data: categoryData.map(item => item.amount),
+                    backgroundColor: colors.slice(0, categoryData.length),
+                    borderColor: '#1e3a5f',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ccd6f6',
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                return `${context.label}: $${context.raw.toFixed(2)} (${percentage}%)`;
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+        console.log('✅ Category chart created successfully');
+    } catch (error) {
+        console.error('❌ Error creating category chart:', error);
+        showChartPlaceholder('category-chart', 'Error loading chart');
+    }
 }
 
 // Display insights
 function displayInsights(insights) {
     const insightsContainer = document.getElementById('insights-list');
 
-    if (insights.length === 0) {
+    if (!insights || insights.length === 0) {
         insightsContainer.innerHTML = '<p>No insights available yet.</p>';
         return;
     }
