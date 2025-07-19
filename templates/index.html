@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -93,6 +94,42 @@
                         <span class="btn-icon">💾</span>
                         Export JSON
                     </button>
+                </div>
+            </section>
+
+            <section class="analytics-section card">
+                <h3 class="section-title">📊 Analytics Dashboard</h3>
+
+                <div class="analytics-grid">
+                    <!-- Summary Stats -->
+                    <div class="stats-card">
+                        <h4>Total Spending</h4>
+                        <div class="stat-value" id="total-spending">$0.00</div>
+                    </div>
+
+                    <div class="stats-card">
+                        <h4>Number of Expenses</h4>
+                        <div class="stat-value" id="expense-count">0</div>
+                    </div>
+
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h4>Monthly Spending Trend</h4>
+                            <canvas id="monthly-chart"></canvas>
+                        </div>
+
+                        <div class="chart-card">
+                            <h4>Spending by Category</h4>
+                            <canvas id="category-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="insights-card">
+                        <h4>💡 Smart Insights</h4>
+                        <div id="insights-list">
+                            <p>Loading insights...</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>

@@ -48,6 +48,10 @@ async function loadExpenses() {
         const response = await fetch('/api/expenses');
         expenses = await response.json();
         renderExpenses();
+
+        // Load analytics after expenses are loaded
+        loadAnalytics();
+
     } catch (error) {
         console.error('Error loading expenses:', error);
         alert('Failed to load expenses. Please refresh the page.');
@@ -85,6 +89,9 @@ async function handleFormSubmit(e) {
             renderExpenses();
             showSuccess('✅ Expense added successfully!');
 
+            // Reload analytics to show updated data
+            loadAnalytics();
+
             // Reset form with animation
             e.target.reset();
             document.getElementById('date').valueAsDate = new Date();
@@ -120,6 +127,9 @@ async function deleteExpense(id) {
                 expenses = expenses.filter(expense => expense.id !== id);
                 renderExpenses();
                 showSuccess('🗑️ Expense deleted!');
+
+                // Reload analytics to show updated data
+                loadAnalytics();
             }, 500);
         }
     } catch (error) {
@@ -244,6 +254,147 @@ function exportToJSON() {
     window.URL.revokeObjectURL(url);
 
     showSuccess('💾 Exported to JSON!');
+}
+
+// NEW ANALYTICS FUNCTIONS
+
+// Load analytics data
+async function loadAnalytics() {
+    try {
+        const response = await fetch('/api/analytics/summary');
+        const data = await response.json();
+
+        // Update summary stats
+        document.getElementById('total-spending').textContent = `$${data.total_expenses.toFixed(2)}`;
+        document.getElementById('expense-count').textContent = expenses.length;
+
+        // Create charts
+        createMonthlyChart(data.monthly_data);
+        createCategoryChart(data.category_data);
+
+        // Display insights
+        displayInsights(data.insights);
+
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+    }
+}
+
+// Create monthly spending trend chart
+function createMonthlyChart(monthlyData) {
+    const ctx = document.getElementById('monthly-chart').getContext('2d');
+
+    // Destroy existing chart if it exists
+    if (window.monthlyChart) {
+        window.monthlyChart.destroy();
+    }
+
+    window.monthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(item => {
+                // Convert "2025-07" to "July 2025"
+                const date = new Date(item.month + '-01');
+                return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            }),
+            datasets: [{
+                label: 'Monthly Spending',
+                data: monthlyData.map(item => item.amount),
+                borderColor: '#64ffda',
+                backgroundColor: 'rgba(100, 255, 218, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4 // Smooth curves
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ccd6f6' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#8892b0' },
+                    grid: { color: '#233554' }
+                },
+                y: {
+                    ticks: {
+                        color: '#8892b0',
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    },
+                    grid: { color: '#233554' }
+                }
+            }
+        }
+    });
+}
+
+// Create category pie chart
+function createCategoryChart(categoryData) {
+    const ctx = document.getElementById('category-chart').getContext('2d');
+
+    // Destroy existing chart if it exists
+    if (window.categoryChart) {
+        window.categoryChart.destroy();
+    }
+
+    // Color palette for categories
+    const colors = [
+        '#64ffda', '#ff5370', '#ffcb6b', '#c3e88d',
+        '#82aaff', '#f78c6c', '#c792ea', '#89ddff'
+    ];
+
+    window.categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryData.map(item => item.category),
+            datasets: [{
+                data: categoryData.map(item => item.amount),
+                backgroundColor: colors.slice(0, categoryData.length),
+                borderColor: '#1e3a5f',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#ccd6f6',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.raw / total) * 100).toFixed(1);
+                            return `${context.label}: $${context.raw.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Display insights
+function displayInsights(insights) {
+    const insightsContainer = document.getElementById('insights-list');
+
+    if (insights.length === 0) {
+        insightsContainer.innerHTML = '<p>No insights available yet.</p>';
+        return;
+    }
+
+    insightsContainer.innerHTML = insights
+        .map(insight => `<p class="insight-item">• ${insight}</p>`)
+        .join('');
 }
 
 // Add shake animation to CSS dynamically
