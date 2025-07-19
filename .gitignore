@@ -7,8 +7,15 @@ __pycache__/
 venv/
 env/
 
-# db
+# Database
 expenses_data.json
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # Mac
 .DS_Store
@@ -16,3 +23,6 @@ expenses_data.json
 # IDE
 .vscode/
 .idea/
+
+# Logs
+*.log

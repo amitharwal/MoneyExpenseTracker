@@ -3,35 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 Expense Tracker</title>
-    <!-- Link to our CSS file -->
+    <title>Expense Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Main container -->
     <div class="container">
-        <!-- Header section -->
         <header class="header">
             <h1 class="header-title">
                 <span class="icon-bounce">💰</span>
                 Expense Tracker
             </h1>
             <p class="header-subtitle">Track your spending with style</p>
+            <div class="user-info">
+                <span>👤 Welcome, {{ username }}!</span>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
             <div class="server-status pulse">
                 <span class="status-dot"></span>
                 Connected
             </div>
         </header>
 
-        <!-- Main content -->
         <main class="content">
-            <!-- Success message (hidden by default) -->
             <div class="success-message" id="success-message">
                 <span class="success-icon">✅</span>
                 <span class="success-text">Success!</span>
             </div>
 
-            <!-- Add expense form -->
             <section class="add-expense card">
                 <h2 class="section-title">Add New Expense</h2>
                 <form id="expense-form" class="expense-form">
@@ -74,23 +72,18 @@
                 </form>
             </section>
 
-            <!-- Loading indicator -->
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>Loading expenses...</p>
             </div>
 
-            <!-- Expense list -->
             <section class="expense-list" id="expense-list">
-                <!-- Expenses will be loaded here by JavaScript -->
             </section>
 
-            <!-- Total section -->
             <section class="total-section card">
                 <h3 class="total-title">Total Spending</h3>
                 <div class="total-amount" id="total">$0.00</div>
 
-                <!-- Export buttons -->
                 <div class="export-section">
                     <button class="btn btn-export" onclick="exportToCSV()">
                         <span class="btn-icon">📊</span>
@@ -105,7 +98,6 @@
         </main>
     </div>
 
-    <!-- Link to our JavaScript file -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

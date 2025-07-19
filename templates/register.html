@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Additional styles for auth pages */
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-title {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 30px;
+            color: var(--accent);
+        }
+
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .auth-link a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .auth-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: var(--danger);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: var(--success);
+            color: var(--primary-bg);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">📝 Register</h1>
+
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" class="form-input" required
+                           placeholder="Choose a username">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="form-input" required
+                           placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-input" required
+                           placeholder="Choose a strong password">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" class="form-input" required
+                           placeholder="Type password again">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-link">
+                Already have an account? <a href="/login">Login here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle registration form submission
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                const errorEl = document.getElementById('error-message');
+                errorEl.textContent = 'Passwords do not match!';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Show success and redirect
+                    const successEl = document.getElementById('success-message');
+                    successEl.textContent = 'Registration successful! Redirecting...';
+                    successEl.style.display = 'block';
+
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    // Show error
+                    const errorEl = document.getElementById('error-message');
+                    errorEl.textContent = data.error;
+                    errorEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
