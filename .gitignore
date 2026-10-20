@@ -1,28 +1,19 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
+.venv/
 venv/
-env/
 
-# Database
-expenses_data.json
+# Local data
 *.db
 *.sqlite3
+instance/
 
-# Environment variables
+# Environment
 .env
-.env.local
-.env.*.local
+.env.*
 
-# Mac
-.DS_Store
-
-# IDE
-.vscode/
+# Editors / OS
 .idea/
-
-# Logs
-*.log
+.vscode/
+.DS_Store

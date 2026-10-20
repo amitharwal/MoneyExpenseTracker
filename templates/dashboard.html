@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+{% block title %}Ledger{% endblock %}
+{% block body_class %}app{% endblock %}
+
+{% macro icon(name) -%}
+<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+  {%- if name == "overview" -%}<path d="M3 20h18M5 16l5-6 4 3 5-7"/>
+  {%- elif name == "activity" -%}<path d="M4 6h16M4 12h16M4 18h10"/>
+  {%- elif name == "budgets" -%}<path d="M4 4h16v16H4zM4 10h16M10 10v10"/>
+  {%- elif name == "recurring" -%}<path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/>
+  {%- elif name == "plus" -%}<path d="M12 5v14M5 12h14"/>
+  {%- elif name == "download" -%}<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>
+  {%- elif name == "theme" -%}<path d="M12 3v18M12 3a9 9 0 0 1 0 18a9 9 0 0 1 0-18"/>
+  {%- elif name == "import" -%}<path d="M12 3v12M7 10l5 5 5-5M4 15v5h16v-5"/>
+  {%- elif name == "settings" -%}<path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/>
+  {%- elif name == "command" -%}<path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z"/>
+  {%- elif name == "upload" -%}<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>
+  {%- elif name == "search" -%}<path d="M10.5 17a6.5 6.5 0 1 0 0-13a6.5 6.5 0 0 0 0 13zM15.5 15.5L20 20"/>
+  {%- elif name == "close" -%}<path d="M6 6l12 12M18 6L6 18"/>
+  {%- elif name == "arrow" -%}<path d="M5 12h14M13 6l6 6-6 6"/>
+  {%- endif -%}
+</svg>
+{%- endmacro %}
+
+{% set views = [("overview", "Overview"), ("activity", "Activity"), ("import", "Import"), ("budgets", "Budgets"), ("recurring", "Recurring")] %}
+
+{% block body %}
+<aside class="sidebar">
+  {% include "_brand.html" %}
+  <nav class="nav" aria-label="Main">
+    {% for key, label in views %}
+      <a href="#{{ key }}" data-nav="{{ key }}">{{ icon(key) }}<span>{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+  <div class="side-actions">
+    <button class="btn btn-primary btn-block" type="button" data-action="new-txn">
+      {{ icon("plus") }}<span>New transaction</span><kbd>N</kbd>
+    </button>
+    <button class="palette-trigger" type="button" data-action="palette">
+      {{ icon("search") }}<span>Search or add…</span><kbd class="kbd-mod">⌘K</kbd>
+    </button>
+  </div>
+  <div class="sidebar-foot">
+    <a class="side-link" href="#settings" data-nav="settings">{{ icon("settings") }}<span>Settings &amp; backups</span></a>
+    <a class="side-link" href="{{ url_for('export_csv') }}">{{ icon("download") }}<span>Export CSV</span></a>
+    <button class="side-link" type="button" data-action="theme">{{ icon("theme") }}<span id="theme-label">Theme: System</span></button>
+  </div>
+</aside>
+
+<header class="mobile-bar">
+  {% include "_brand.html" %}
+  <div class="mobile-actions">
+    <button class="icon-btn" type="button" data-action="palette" aria-label="Search or quick add">{{ icon("search") }}</button>
+    <a class="icon-btn" href="#settings" aria-label="Settings">{{ icon("settings") }}</a>
+    <button class="btn btn-primary btn-sm" type="button" data-action="new-txn" aria-label="New transaction">{{ icon("plus") }}<span>New</span></button>
+  </div>
+</header>
+
+<main class="content">
+
+  <!-- ================= Overview ================= -->
+  <section class="view" id="view-overview" data-view="overview">
+    <header class="page-head">
+      <div>
+        <h1 id="ov-greeting">Hello</h1>
+        <p class="muted" id="ov-date"></p>
+      </div>
+    </header>
+
+    <div class="panel empty" id="ov-empty" hidden>
+      <div>
+        <h2>Let's get you set up</h2>
+        <p>Import a statement from your bank, add a transaction, or load six months of sample activity to look around.</p>
+      </div>
+      <div class="empty-actions">
+        <a class="btn btn-primary" href="#import">Import a statement</a>
+        <button class="btn btn-outline" type="button" data-action="new-txn">Add a transaction</button>
+        <button class="btn btn-outline" type="button" data-action="demo">Load sample data</button>
+      </div>
+    </div>
+
+    <div class="demo-banner" id="ov-demo" hidden>
+      <span>You're looking at sample data.</span>
+      <button class="btn btn-outline btn-sm" type="button" data-action="remove-demo">Remove sample data</button>
+    </div>
+
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <p class="label">Cash balance</p>
+          <p class="hero-value num" id="ov-balance">$0.00</p>
+          <p class="hero-change num"><span id="ov-change"></span> <span class="muted" id="ov-change-label"></span></p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Chart range" id="ov-ranges">
+          {% for r in ["1M", "3M", "6M", "YTD", "1Y", "ALL"] %}
+            <button type="button" role="tab" data-range="{{ r }}" aria-selected="{{ 'true' if r == '3M' else 'false' }}">{{ r }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="chart" id="chart">
+        <svg role="img" aria-label="Balance over time">
+          <defs>
+            <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" class="grad-top"/>
+              <stop offset="1" class="grad-bottom"/>
+            </linearGradient>
+          </defs>
+          <path class="chart-area" fill="url(#chart-grad)"/>
+          <line class="chart-base"/>
+          <path class="chart-line-dim"/>
+          <path class="chart-line"/>
+          <line class="chart-cursor"/>
+          <circle class="chart-dot" r="4.5"/>
+        </svg>
+        <div class="chart-axis" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat" style="--c: var(--neg)">
+        <p class="label" id="kpi-spent-label">Spent this month</p>
+        <p class="stat-value num" id="kpi-spent">—</p>
+        <p class="stat-sub num" id="kpi-spent-sub"></p>
+      </div>
+      <div class="stat" style="--c: var(--pos)">
+        <p class="label" id="kpi-income-label">Earned this month</p>
+        <p class="stat-value num" id="kpi-income">—</p>
+        <p class="stat-sub num" id="kpi-income-sub"></p>
+      </div>
+      <div class="stat" style="--c: var(--blue)">
+        <p class="label">Net this month</p>
+        <p class="stat-value num" id="kpi-net">—</p>
+        <p class="stat-sub num" id="kpi-net-sub"></p>
+      </div>
+      <div class="stat" style="--c: var(--violet)">
+        <p class="label">After upcoming bills</p>
+        <p class="stat-value num" id="kpi-projected">—</p>
+        <p class="stat-sub num" id="kpi-projected-sub"></p>
+      </div>
+    </div>
+
+    <div class="insights" id="ov-insights"></div>
+
+    <section class="section">
+      <header class="section-head">
+        <h2 id="ov-cats-title">Spending this month</h2>
+        <a href="#budgets" class="link-arrow">Budgets {{ icon("arrow") }}</a>
+      </header>
+      <div class="stack-bar" id="ov-stack" aria-hidden="true"></div>
+      <ul class="cat-grid" id="ov-cats"></ul>
+      <p class="section-empty" id="ov-cats-empty" hidden>No spending yet this month.</p>
+    </section>
+
+    <div class="grid-2">
+      <section class="section">
+        <header class="section-head">
+          <h2>Coming up</h2>
+          <a href="#recurring" class="link-arrow">Recurring {{ icon("arrow") }}</a>
+        </header>
+        <ul class="upcoming" id="ov-upcoming"></ul>
+        <p class="section-empty" id="ov-upcoming-empty" hidden>No recurring bills or paychecks yet. <a href="#recurring">Add one</a></p>
+      </section>
+
+      <section class="section">
+        <header class="section-head">
+          <h2>Recent</h2>
+          <a href="#activity" class="link-arrow">All activity {{ icon("arrow") }}</a>
+        </header>
+        <ul class="txn-list" id="ov-recent"></ul>
+        <p class="section-empty" id="ov-recent-empty" hidden>Nothing yet. Press <kbd>N</kbd> to add your first transaction.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= Activity ================= -->
+  <section class="view" id="view-activity" data-view="activity" hidden>
+    <header class="page-head">
+      <div>
+        <h1>Activity</h1>
+        <p class="muted">Every transaction, searchable. Click one to edit it.</p>
+      </div>
+      <div class="head-actions">
+        <a class="btn btn-outline btn-sm" href="#import">{{ icon("import") }}<span>Import</span></a>
+        <a class="btn btn-outline btn-sm" href="{{ url_for('export_csv') }}">{{ icon("download") }}<span>Export</span></a>
+      </div>
+    </header>
+
+    <div class="panel toolbar">
+      <label class="search">
+        {{ icon("search") }}
+        <input type="search" id="act-q" placeholder="Search descriptions or categories" aria-label="Search">
+        <kbd>/</kbd>
+      </label>
+      <div class="segmented" role="radiogroup" aria-label="Type" id="act-kind">
+        <button type="button" data-kind="" aria-pressed="true">All</button>
+        <button type="button" data-kind="expense" aria-pressed="false">Spending</button>
+        <button type="button" data-kind="income" aria-pressed="false">Income</button>
+      </div>
+      <select id="act-category" aria-label="Category"><option value="">All categories</option></select>
+      <select id="act-month" aria-label="Month"><option value="">All time</option></select>
+    </div>
+
+    <div class="summary-strip num" id="act-summary"></div>
+
+    <section class="panel">
+      <div id="act-list"></div>
+      <p class="panel-empty" id="act-empty" hidden>No transactions match these filters.</p>
+    </section>
+  </section>
+
+  <!-- ================= Budgets ================= -->
+  <section class="view" id="view-budgets" data-view="budgets" hidden>
+    <header class="page-head">
+      <div>
+        <h1>Budgets</h1>
+        <p class="muted" id="bud-month"></p>
+      </div>
+    </header>
+
+    <div class="panel kpis kpis-3">
+      <div class="kpi"><p class="label">Budgeted</p><p class="kpi-value num" id="bud-total">—</p><p class="kpi-sub" id="bud-count"></p></div>
+      <div class="kpi"><p class="label">Spent</p><p class="kpi-value num" id="bud-spent">—</p><p class="kpi-sub num" id="bud-spent-sub"></p></div>
+      <div class="kpi"><p class="label">Left</p><p class="kpi-value num" id="bud-left">—</p><p class="kpi-sub num" id="bud-left-sub"></p></div>
+    </div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>Monthly limits</h2>
+        <p class="legend"><span class="legend-pace"></span>Where you should be by today</p>
+      </header>
+      <p class="panel-note">Type a limit for any category. The placeholder is your 3-month average, which makes a good starting point. Clear a field to remove its budget.</p>
+      <ul class="budgets" id="bud-list"></ul>
+    </section>
+  </section>
+
+  <!-- ================= Recurring ================= -->
+  <section class="view" id="view-recurring" data-view="recurring" hidden>
+    <header class="page-head">
+      <div>
+        <h1>Recurring</h1>
+        <p class="muted">Monthly bills and paychecks. They're added to your activity automatically on their due date.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" type="button" data-action="new-rec">{{ icon("plus") }}<span>Add recurring</span></button>
+    </header>
+
+    <div class="panel kpis kpis-3">
+      <div class="kpi"><p class="label">Monthly income</p><p class="kpi-value num" id="rec-income">—</p></div>
+      <div class="kpi"><p class="label">Fixed costs</p><p class="kpi-value num" id="rec-fixed">—</p></div>
+      <div class="kpi"><p class="label">Fixed costs vs income</p><p class="kpi-value num" id="rec-share">—</p><p class="kpi-sub" id="rec-share-sub"></p></div>
+    </div>
+
+    <section class="panel">
+      <ul class="rec-list" id="rec-list"></ul>
+      <p class="panel-empty" id="rec-empty" hidden>Nothing recurring yet. Add rent, subscriptions, or your paycheck so you can see what's coming.</p>
+    </section>
+  </section>
+
+  <!-- ================= Import ================= -->
+  <section class="view" id="view-import" data-view="import" hidden>
+    <header class="page-head">
+      <div>
+        <h1>Import</h1>
+        <p class="muted">Bring in transactions from your bank's CSV, OFX, or QFX export. Nothing leaves this computer.</p>
+      </div>
+    </header>
+
+    <!-- Step 1: choose a file -->
+    <label class="dropzone" id="imp-drop">
+      <input type="file" id="imp-file" accept=".csv,.ofx,.qfx,.txt,text/csv" hidden>
+      {{ icon("upload") }}
+      <strong>Drop a statement here, or click to choose a file</strong>
+      <span class="muted">CSV from any bank, or OFX/QFX ("Quicken" or "Money" download)</span>
+    </label>
+
+    <!-- Step 2: column mapping (CSV only) -->
+    <section class="section" id="imp-mapping" hidden>
+      <header class="section-head">
+        <h2>Columns <span class="muted" id="imp-profile"></span></h2>
+        <span class="muted" id="imp-filename"></span>
+      </header>
+      <div class="map-grid">
+        <label class="field"><span>Date</span><select data-map="date"></select></label>
+        <label class="field"><span>Description</span><select data-map="description"></select></label>
+        <label class="field"><span>Amount</span><select data-map="amount"></select></label>
+        <label class="field"><span>Debit <em class="muted">(money out)</em></span><select data-map="debit"></select></label>
+        <label class="field"><span>Credit <em class="muted">(money in)</em></span><select data-map="credit"></select></label>
+        <label class="field"><span>Date format</span>
+          <select data-map="date_format">
+            <option value="">Detect automatically</option>
+            <option value="%m/%d/%Y">MM/DD/YYYY</option><option value="%m/%d/%y">MM/DD/YY</option>
+            <option value="%d/%m/%Y">DD/MM/YYYY</option><option value="%d/%m/%y">DD/MM/YY</option>
+            <option value="%Y-%m-%d">YYYY-MM-DD</option><option value="%Y/%m/%d">YYYY/MM/DD</option>
+            <option value="%m-%d-%Y">MM-DD-YYYY</option><option value="%d-%m-%Y">DD-MM-YYYY</option>
+            <option value="%b %d, %Y">Mon DD, YYYY</option><option value="%d %b %Y">DD Mon YYYY</option>
+          </select>
+        </label>
+      </div>
+      <label class="check check-inline">
+        <input type="checkbox" data-map="invert">
+        <span>Spending shows as <strong>positive</strong> numbers in this file <span class="muted">(common for credit cards)</span></span>
+      </label>
+    </section>
+
+    <!-- Step 3: review -->
+    <section class="section" id="imp-review" hidden>
+      <header class="section-head">
+        <h2>Review</h2>
+        <div class="imp-summary num" id="imp-summary"></div>
+      </header>
+      <div class="imp-toolbar">
+        <div class="segmented" id="imp-filter" role="radiogroup" aria-label="Show">
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="new" aria-pressed="false">New</button>
+          <button type="button" data-filter="other" aria-pressed="false">Uncategorized</button>
+          <button type="button" data-filter="skip" aria-pressed="false">Skipped</button>
+        </div>
+        <span class="muted imp-hint">Change a category and Ledger remembers it for that merchant next time.</span>
+      </div>
+      <div class="imp-table-wrap">
+        <table class="imp-table">
+          <thead><tr><th class="c-check"><input type="checkbox" id="imp-all" aria-label="Select all"></th><th>Date</th><th>Description</th><th>Category</th><th class="c-amt">Amount</th></tr></thead>
+          <tbody id="imp-rows"></tbody>
+        </table>
+      </div>
+      <div class="imp-actions">
+        <button class="btn btn-outline" type="button" data-action="import-cancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="imp-commit">Import</button>
+      </div>
+    </section>
+
+    <!-- Rules -->
+    <section class="section">
+      <header class="section-head">
+        <h2>Category rules</h2>
+        <button class="btn btn-outline btn-sm" type="button" data-action="new-rule">{{ icon("plus") }}<span>Add rule</span></button>
+      </header>
+      <p class="section-note">When a bank description contains the match text, Ledger files it under that category (and can rename it). Rules are created automatically when you fix a category.</p>
+      <ul class="rule-list" id="rule-list"></ul>
+      <p class="section-empty" id="rule-empty" hidden>No rules yet. They'll appear here as you import and fix categories.</p>
+    </section>
+  </section>
+
+  <!-- ================= Settings ================= -->
+  <section class="view" id="view-settings" data-view="settings" hidden>
+    <header class="page-head">
+      <div>
+        <h1>Settings &amp; backups</h1>
+        <p class="muted">Everything is stored on this computer in a single file.</p>
+      </div>
+    </header>
+
+    <div class="stat-strip stat-strip-3">
+      <div class="stat" style="--c: var(--blue)"><p class="label">Transactions</p><p class="stat-value num" id="set-count">—</p><p class="stat-sub" id="set-count-sub"></p></div>
+      <div class="stat" style="--c: var(--violet)"><p class="label">Rules learned</p><p class="stat-value num" id="set-rules">—</p></div>
+      <div class="stat" style="--c: var(--pos)"><p class="label">Database size</p><p class="stat-value num" id="set-size">—</p></div>
+    </div>
+
+    <section class="section">
+      <header class="section-head"><h2>Data folder</h2></header>
+      <p class="path-line"><code id="set-folder"></code> <button class="btn btn-outline btn-sm" type="button" data-action="copy-folder">Copy path</button></p>
+      <p class="section-note">Ledger backs up automatically once a day and before every import or restore, keeping the last 30 copies in the <code>backups</code> folder inside it.</p>
+    </section>
+
+    <section class="section">
+      <header class="section-head">
+        <h2>Backups</h2>
+        <div class="head-actions">
+          <label class="btn btn-outline btn-sm">{{ icon("upload") }}<span>Restore from file…</span><input type="file" id="restore-file" accept=".db" hidden></label>
+          <button class="btn btn-primary btn-sm" type="button" data-action="backup-now">Back up now</button>
+        </div>
+      </header>
+      <ul class="backup-list" id="backup-list"></ul>
+    </section>
+
+    <section class="section" id="set-demo" hidden>
+      <header class="section-head"><h2>Sample data</h2></header>
+      <p class="path-line"><span id="set-demo-count"></span> <button class="btn btn-danger btn-sm" type="button" data-action="remove-demo">Remove sample data</button></p>
+    </section>
+
+    <section class="section">
+      <header class="section-head"><h2>Keyboard shortcuts</h2></header>
+      <dl class="shortcuts">
+        <div><dt><kbd class="kbd-mod">⌘K</kbd></dt><dd>Search, jump anywhere, or quick add ("12.50 lunch yesterday")</dd></div>
+        <div><dt><kbd>N</kbd></dt><dd>New transaction</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Search activity</dd></div>
+        <div><dt><kbd>I</kbd></dt><dd>Import a statement</dd></div>
+        <div><dt><kbd>G</kbd> then <kbd>O</kbd> <kbd>A</kbd> <kbd>B</kbd> <kbd>R</kbd></dt><dd>Go to Overview, Activity, Budgets, Recurring</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close</dd></div>
+      </dl>
+    </section>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Main">
+  {% for key, label in views %}
+    <a href="#{{ key }}" data-nav="{{ key }}">{{ icon(key) }}<span>{{ label }}</span></a>
+  {% endfor %}
+</nav>
+
+<!-- ================= Drawer (add / edit) ================= -->
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
+  <form id="drawer-form" novalidate>
+    <header class="drawer-head">
+      <h2 id="drawer-title">New transaction</h2>
+      <button type="button" class="icon-btn" data-action="close" aria-label="Close">{{ icon("close") }}</button>
+    </header>
+
+    <div class="drawer-body">
+      <label class="quick-add" id="f-quick-wrap">
+        {{ icon("command") }}
+        <input id="f-quick" autocomplete="off" placeholder='Quick add: "12.50 lunch dining yesterday"'>
+      </label>
+
+      <div class="segmented segmented-block" role="radiogroup" aria-label="Type" id="f-kind">
+        <button type="button" data-kind="expense" aria-pressed="true">Expense</button>
+        <button type="button" data-kind="income" aria-pressed="false">Income</button>
+      </div>
+
+      <label class="amount-field">
+        <span class="label">Amount</span>
+        <span class="amount-input num"><span>$</span><input id="f-amount" inputmode="decimal" placeholder="0.00" autocomplete="off"></span>
+      </label>
+
+      <label class="field">
+        <span id="f-note-label">Description</span>
+        <input id="f-note" maxlength="140" autocomplete="off" placeholder="e.g. Trader Joe's">
+      </label>
+
+      <div class="field">
+        <span id="f-category-label">Category</span>
+        <div class="chips" id="f-category" role="radiogroup" aria-labelledby="f-category-label"></div>
+      </div>
+
+      <label class="field">
+        <span id="f-date-label">Date</span>
+        <input type="date" id="f-date">
+      </label>
+
+      <label class="check" id="f-repeat-wrap">
+        <input type="checkbox" id="f-repeat">
+        <span><strong>Repeat monthly</strong><br><span class="muted">Log this automatically on the same day each month.</span></span>
+      </label>
+
+      <p class="form-error" id="f-error" role="alert" hidden></p>
+    </div>
+
+    <footer class="drawer-foot">
+      <button type="button" class="btn btn-danger" id="f-delete" hidden>Delete</button>
+      <button type="submit" class="btn btn-primary" id="f-submit">Save</button>
+    </footer>
+  </form>
+</aside>
+
+<!-- ================= Rule editor ================= -->
+<div class="drawer-backdrop" id="rule-backdrop" hidden></div>
+<aside class="drawer" id="rule-drawer" role="dialog" aria-modal="true" aria-labelledby="rule-title" hidden>
+  <form id="rule-form" novalidate>
+    <header class="drawer-head">
+      <h2 id="rule-title">New rule</h2>
+      <button type="button" class="icon-btn" data-action="close-rule" aria-label="Close">{{ icon("close") }}</button>
+    </header>
+    <div class="drawer-body">
+      <label class="field">
+        <span>When the bank description contains</span>
+        <input id="r-pattern" autocomplete="off" placeholder="e.g. trader joe">
+      </label>
+      <div class="segmented segmented-block" role="radiogroup" aria-label="Type" id="r-kind">
+        <button type="button" data-kind="expense" aria-pressed="true">Expense</button>
+        <button type="button" data-kind="income" aria-pressed="false">Income</button>
+      </div>
+      <div class="field" style="margin-top:18px">
+        <span>File it under</span>
+        <div class="chips" id="r-category" role="radiogroup"></div>
+      </div>
+      <label class="field">
+        <span>Rename to <em class="muted">(optional)</em></span>
+        <input id="r-rename" maxlength="140" autocomplete="off" placeholder="e.g. Trader Joe's">
+      </label>
+      <p class="form-error" id="r-error" role="alert" hidden></p>
+    </div>
+    <footer class="drawer-foot">
+      <button type="button" class="btn btn-danger" id="r-delete" hidden>Delete</button>
+      <button type="button" class="btn btn-outline" id="r-apply" hidden>Apply to past</button>
+      <button type="submit" class="btn btn-primary" id="r-submit">Save rule</button>
+    </footer>
+  </form>
+</aside>
+
+<!-- ================= Command palette ================= -->
+<div class="palette-backdrop" id="palette-backdrop" hidden></div>
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <label class="palette-input">
+    {{ icon("search") }}
+    <input id="palette-q" autocomplete="off" spellcheck="false" placeholder='Search, jump to a page, or type "12.50 lunch yesterday"'>
+    <kbd>Esc</kbd>
+  </label>
+  <ul class="palette-list" id="palette-list" role="listbox"></ul>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  window.LEDGER = {
+    today: "{{ today }}",
+    categories: { expense: {{ expense_categories|tojson }}, income: {{ income_categories|tojson }} }
+  };
+</script>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+{% endblock %}
